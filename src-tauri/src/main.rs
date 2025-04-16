@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    simulador_partidas_lib::run()
+    ppt_joao_lib::run()
 }
