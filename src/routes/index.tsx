@@ -12,7 +12,6 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  // Queries
   const { mutate, isPending } = useMutation({
     mutationFn: cropOnClick,
     mutationKey: ["crop"],

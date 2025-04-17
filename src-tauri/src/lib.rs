@@ -6,6 +6,7 @@
 mod commands;
 
 use commands::crop;
+#[cfg(debug_assertions)]
 use specta_typescript::Typescript;
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 use tauri_specta::{collect_commands, Builder};
@@ -21,7 +22,8 @@ pub fn run() {
         .export(
             Typescript::default()
                 .formatter(specta_typescript::formatter::biome)
-                .header("/* eslint-disable */"),
+                .header("/* eslint-disable */")
+                .header("// @ts-nocheck"),
             "../src/bindings.ts",
         )
         .expect("Failed to export typescript bindings");

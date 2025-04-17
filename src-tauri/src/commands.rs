@@ -74,15 +74,15 @@ pub fn crop(src: PathBuf, dst: PathBuf) -> Result<Vec<String>, AppError> {
 }
 
 fn crop_image_file(file: &DirEntry, dst: &Path) -> Result<(), AppError> {
-    let mut img = ImageReader::open(file.path())?.decode()?;
+    let img = ImageReader::open(file.path())?.decode()?;
 
-    let top = (0.055 * img.height() as f64) as u32;
+    let top = libm::ceil(0.055 * img.height() as f64) as u32;
     let bottom = (0.124 * img.height() as f64) as u32;
-    let height = img.height() - top - bottom;
+    let height = img.height() - (top + bottom);
 
-    let cropped = img.crop(
+    let cropped = img.crop_imm(
         0,
-        libm::ceil(0.055 * img.height() as f64) as u32,
+        top,
         img.width(),
         height,
     );
