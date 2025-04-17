@@ -31,5 +31,7 @@ image = {version = "0.25.6"}
 thiserror = "2.0.12"
 libm = "0.2.11"
 anyhow = "1.0.98"
-tauri-plugin-log = "2"
+tauri-plugin-log = {version = "2", features = ["colored"] }
+log = "0.4.27"
+rayon = "1.10.0"
 

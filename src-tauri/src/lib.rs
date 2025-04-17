@@ -7,6 +7,7 @@ mod commands;
 
 use commands::crop;
 use specta_typescript::Typescript;
+use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 use tauri_specta::{collect_commands, Builder};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -26,7 +27,13 @@ pub fn run() {
         .expect("Failed to export typescript bindings");
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_log::Builder::new().build())
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .with_colors(ColoredLevelConfig::default())
+                .level_for("tauri", log::LevelFilter::Warn)
+                .level_for("tao", log::LevelFilter::Warn)
+                .build(),
+        )
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
