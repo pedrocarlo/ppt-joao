@@ -27,4 +27,7 @@ specta-typescript = "0.0.9"
 tauri-specta = { version = "=2.0.0-rc.21", features = ["derive", "typescript"] }
 tauri-plugin-fs = "2"
 tauri-plugin-dialog = "2"
+image = "0.25.6"
+thiserror = "2.0.12"
+libm = "0.2.11"
 

@@ -28,6 +28,8 @@ function Index() {
     }
   }
 
+  
+
   return (
     <div className="flex h-full w-full flex-col">
       <div className="flex flex-row items-center justify-center gap-2">
@@ -43,7 +45,7 @@ function Index() {
       </div>
 
       <div className="flex h-full w-full items-center justify-center gap-2">
-        <Button className="h-1/3 w-1/3 cursor-pointer">CROP TUDO BICHO!</Button>
+        <Button className="h-1/3 w-1/3">CROP TUDO BICHO!</Button>
       </div>
     </div>
   );
