@@ -7,12 +7,18 @@ use std::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
+    // #[error(transparent)]
+    // Image(#[from] ImageError),
     #[error(transparent)]
-    // ImageError is not `Serialize` or `Type`
-    Image(#[from] ImageError),
-    #[error(transparent)]
-    // io::Error is not `Serialize` or `Type`
     Io(#[from] std::io::Error),
+    #[error("invalid image path: {filepath}. Error: {error}")]
+    ImageCrop {
+        filepath: String,
+        #[source]
+        error: ImageError,
+    },
+    #[error("{0}")]
+    Custom(String),
 }
 
 // we must manually implement serde::Serialize
@@ -36,14 +42,14 @@ impl specta::Type for AppError {
 
 #[tauri::command(async)]
 #[specta::specta]
-pub fn crop(src: PathBuf, dst: PathBuf) -> Result<Vec<String>, AppError> {
+pub fn crop(src: PathBuf, dst: PathBuf) -> Result<Vec<AppError>, AppError> {
     log::debug!(
         "crop(src: {}, dst: {})",
         src.to_string_lossy(),
         dst.to_string_lossy()
     );
     let files = std::fs::read_dir(src)?;
-    let file_errors: Vec<String> = files
+    let file_errors: Vec<AppError> = files
         .par_bridge()
         .filter_map(|file| match file {
             Ok(file) => {
@@ -52,20 +58,28 @@ pub fn crop(src: PathBuf, dst: PathBuf) -> Result<Vec<String>, AppError> {
                 }
 
                 if let Err(err) = ImageFormat::from_path(&file.path()) {
-                    log::warn!("File: {}\n {err}", &file.path().to_string_lossy());
-                    return Some(err.to_string());
+                    let err = AppError::ImageCrop {
+                        filepath: file.path().to_string_lossy().to_string(),
+                        error: err,
+                    };
+                    log::warn!("{err}");
+                    return Some(err);
                 }
 
                 if let Err(err) = crop_image_file(&file, &dst) {
-                    log::warn!("File: {}\n {err}", &file.path().to_string_lossy());
-                    return Some(err.to_string());
+                    let err = AppError::ImageCrop {
+                        filepath: file.path().to_string_lossy().to_string(),
+                        error: err,
+                    };
+                    log::warn!("{err}");
+                    return Some(err);
                 }
 
                 None
             }
             Err(err) => {
                 log::warn!("{err}");
-                Some(err.to_string())
+                Some(AppError::Custom(err.to_string()))
             }
         })
         .collect();
@@ -73,21 +87,14 @@ pub fn crop(src: PathBuf, dst: PathBuf) -> Result<Vec<String>, AppError> {
     Ok(file_errors)
 }
 
-fn crop_image_file(file: &DirEntry, dst: &Path) -> Result<(), AppError> {
+fn crop_image_file(file: &DirEntry, dst: &Path) -> Result<(), ImageError> {
     let img = ImageReader::open(file.path())?.decode()?;
 
     let top = libm::ceil(0.055 * img.height() as f64) as u32;
     let bottom = (0.124 * img.height() as f64) as u32;
     let height = img.height() - (top + bottom);
 
-    let cropped = img.crop_imm(
-        0,
-        top,
-        img.width(),
-        height,
-    );
-    let _ = cropped.save(dst.join(file.file_name()))?;
+    let img = img.crop_imm(0, top, img.width(), height);
+    let _ = img.save(dst.join(file.file_name()))?;
     Ok(())
 }
-
-

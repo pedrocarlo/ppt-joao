@@ -30,7 +30,6 @@ function Index() {
     const selectedDir = await open({
       multiple: false,
       directory: true,
-      // defaultPath: await desktopDir(),
     });
     if (selectedDir == null) {
       toast.error("No directory selected");
@@ -46,14 +45,14 @@ function Index() {
       toast.error("Either the Crop Folder or the Image Folder is not selected");
     } else {
       const res = await commands.crop(imageDir, cropDir);
-      console.log(res);
-      if (res.status === "ok") {
-        if (res.data.length > 0) {
-          toast.error("Following file errored", {
-            description: res.data,
+      console.debug(res);
+      if (res.status === "ok" && res.data.length > 0) {
+        for (const err of res.data) {
+          toast.error("File Error", {
+            description: err,
           });
         }
-      } else {
+      } else if (res.status === "error") {
         toast.error(res.error);
       }
     }
