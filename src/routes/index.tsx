@@ -4,6 +4,7 @@ import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { desktopDir } from "@tauri-apps/api/path";
 import { toast } from "sonner";
+import { commands } from "@/bindings";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -17,7 +18,7 @@ function Index() {
     const selectedDir = await open({
       multiple: false,
       directory: true,
-      defaultPath: await desktopDir(),
+      // defaultPath: await desktopDir(),
     });
     if (selectedDir == null) {
       toast.error("No directory selected");
@@ -28,7 +29,20 @@ function Index() {
     }
   }
 
-  
+  async function cropOnClick() {
+    if (cropDir === undefined || imageDir === undefined) {
+      toast.error("Either the Crop Folder or the Image Folder is not selected");
+    } else {
+      const res = await commands.crop(cropDir, imageDir);
+      if (res.status === "ok") {
+        if (!res.data) {
+          toast.error("Following file errored", res.data);
+        }
+      } else {
+        toast.error(res.error);
+      }
+    }
+  }
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -45,7 +59,7 @@ function Index() {
       </div>
 
       <div className="flex h-full w-full items-center justify-center gap-2">
-        <Button className="h-1/3 w-1/3">CROP TUDO BICHO!</Button>
+        <Button onClick={cropOnClick} className="h-1/3 w-1/3">CROP TUDO BICHO!</Button>
       </div>
     </div>
   );

@@ -1,23 +1,33 @@
 use image::{ImageError, ImageReader};
-use serde::Serialize;
 use std::path::PathBuf;
 
-#[derive(Debug, thiserror::Error, specta::Type, Serialize)]
+#[derive(Debug, thiserror::Error)]
 pub enum CropError {
     #[error(transparent)]
     // ImageError is not `Serialize` or `Type`
-    Image(
-        #[from]
-        #[serde(skip)]
-        ImageError,
-    ),
+    Image(#[from] ImageError),
     #[error(transparent)]
     // io::Error is not `Serialize` or `Type`
-    Io(
-        #[from]
-        #[serde(skip)]
-        std::io::Error,
-    ),
+    Io(#[from] std::io::Error),
+}
+
+// we must manually implement serde::Serialize
+impl serde::Serialize for CropError {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::ser::Serializer,
+    {
+        serializer.serialize_str(format!("{:#?}", self).as_str())
+    }
+}
+
+impl specta::Type for CropError {
+    fn inline(
+        _type_map: &mut specta::TypeCollection,
+        _generics: specta::Generics,
+    ) -> specta::datatype::DataType {
+        specta::datatype::DataType::Primitive(specta::datatype::PrimitiveType::String)
+    }
 }
 
 #[tauri::command]
