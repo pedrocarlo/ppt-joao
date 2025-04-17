@@ -10,6 +10,7 @@
     }
   },
   "linter": {
+    "enabled": true,
     "rules": {
       "nursery": {
         "useSortedClasses": {
@@ -22,17 +23,5 @@
         "noConsole": "off"
       }
     }
-  },
-  "overrides": [
-    {
-      "include": ["src/App.tsx"],
-      "linter": {
-        "rules": {
-          "style": {
-            "useFilenamingConvention": "off"
-          }
-        }
-      }
-    }
-  ]
+  }
 }

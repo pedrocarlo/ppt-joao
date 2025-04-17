@@ -1,4 +1,5 @@
+use specta_typescript::Typescript;
+
 #[tauri::command]
-pub fn crop() {
-    
-}
+#[specta::specta]
+pub fn crop() {}
