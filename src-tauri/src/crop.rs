@@ -1,4 +1,5 @@
-use image::{ImageError, ImageFormat, ImageReader};
+use image::{open, ImageError, ImageFormat};
+use kalosm_ocr::OcrInferenceError;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use std::{
     fs::DirEntry,
@@ -6,16 +7,22 @@ use std::{
 };
 
 #[derive(Debug, thiserror::Error)]
-pub enum AppError {
+pub(crate) enum AppError {
     // #[error(transparent)]
     // Image(#[from] ImageError),
     #[error(transparent)]
     Io(#[from] std::io::Error),
-    #[error("invalid image path: {filepath}. Error: {error}")]
-    ImageCrop {
+    #[error("invalid image: `{filepath}`. Error: {error}")]
+    Image {
         filepath: String,
         #[source]
         error: ImageError,
+    },
+    #[error("ocr failed on image: `{filepath}`. Error: {error}")]
+    Ocr {
+        filepath: String,
+        #[source]
+        error: OcrInferenceError,
     },
     #[error("{0}")]
     Custom(String),
@@ -58,7 +65,7 @@ pub fn crop(src: PathBuf, dst: PathBuf) -> Result<Vec<AppError>, AppError> {
                 }
 
                 if let Err(err) = ImageFormat::from_path(&file.path()) {
-                    let err = AppError::ImageCrop {
+                    let err = AppError::Image {
                         filepath: file.path().to_string_lossy().to_string(),
                         error: err,
                     };
@@ -67,7 +74,7 @@ pub fn crop(src: PathBuf, dst: PathBuf) -> Result<Vec<AppError>, AppError> {
                 }
 
                 if let Err(err) = crop_image_file(&file, &dst) {
-                    let err = AppError::ImageCrop {
+                    let err = AppError::Image {
                         filepath: file.path().to_string_lossy().to_string(),
                         error: err,
                     };
@@ -88,7 +95,7 @@ pub fn crop(src: PathBuf, dst: PathBuf) -> Result<Vec<AppError>, AppError> {
 }
 
 fn crop_image_file(file: &DirEntry, dst: &Path) -> Result<(), ImageError> {
-    let img = ImageReader::open(file.path())?.decode()?;
+    let img = open(file.path())?;
 
     let top = libm::ceil(0.055 * img.height() as f64) as u32;
     let bottom = (0.124 * img.height() as f64) as u32;

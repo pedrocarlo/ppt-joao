@@ -3,19 +3,22 @@
     windows_subsystem = "windows"
 )]
 
-mod commands;
+mod crop;
+mod image_sorter;
 
-use commands::crop;
+use crop::crop;
+use image_sorter::{OcrLoadEvent, load_ocr, sort_images};
 #[cfg(debug_assertions)]
 use specta_typescript::Typescript;
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
-use tauri_specta::{collect_commands, Builder};
+use tauri_specta::{Builder, collect_commands, collect_events};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = Builder::<tauri::Wry>::new()
         // Then register them (separated by a comma)
-        .commands(collect_commands![crop,]);
+        .commands(collect_commands![crop, sort_images])
+        .events(collect_events![OcrLoadEvent,]);
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds
     builder
@@ -43,6 +46,8 @@ pub fn run() {
         .setup(move |app| {
             // This is also required if you want to use events
             builder.mount_events(app);
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move { load_ocr(handle) });
 
             Ok(())
         })
